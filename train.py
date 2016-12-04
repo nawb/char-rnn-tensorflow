@@ -12,7 +12,7 @@ from model import Model
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='data/tinyshakespeare',
+    parser.add_argument('--data_dir', type=str, default='data/',
                        help='data directory containing input.txt')
     parser.add_argument('--save_dir', type=str, default='save',
                        help='directory to store checkpointed models')
@@ -22,7 +22,7 @@ def main():
                        help='number of layers in the RNN')
     parser.add_argument('--model', type=str, default='lstm',
                        help='rnn, gru, or lstm')
-    parser.add_argument('--batch_size', type=int, default=50,
+    parser.add_argument('--batch_size', type=int, default=2,#50,
                        help='minibatch size')
     parser.add_argument('--seq_length', type=int, default=50,
                        help='RNN sequence length')
@@ -82,8 +82,8 @@ def train(args):
     model = Model(args)
 
     with tf.Session() as sess:
-        tf.initialize_all_variables().run()
-        saver = tf.train.Saver(tf.all_variables())
+        sess.run(tf.global_variables_initializer())
+        saver = tf.train.Saver(tf.global_variables())
         # restore model
         if args.init_from is not None:
             saver.restore(sess, ckpt.model_checkpoint_path)
@@ -93,8 +93,8 @@ def train(args):
             state = sess.run(model.initial_state)
             for b in range(data_loader.num_batches):
                 start = time.time()
-                x, y = data_loader.next_batch()
-                feed = {model.input_data: x, model.targets: y}
+                x, y = data_loader.next_batch() # x: all inputs, y: all inputs shifted left once, looping around
+                feed = {model.input_data: x, model.targets: y}                
                 for i, (c, h) in enumerate(model.initial_state):
                     feed[c] = state[i].c
                     feed[h] = state[i].h

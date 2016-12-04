@@ -24,17 +24,23 @@ class TextLoader():
         self.create_batches()
         self.reset_batch_pointer()
 
+    def tokenize_data(self, data):
+        from nltk.tokenize import TreebankWordTokenizer
+        tokenized_sentence = TreebankWordTokenizer().tokenize(data)  #all joined together
+        return tokenized_sentence
+
     def preprocess(self, input_file, vocab_file, tensor_file):
         with codecs.open(input_file, "r", encoding=self.encoding) as f:
             data = f.read()
-        counter = collections.Counter(data)
-        count_pairs = sorted(counter.items(), key=lambda x: -x[1])
+        counter = collections.Counter(self.tokenize_data(data)) # {count: word}
+        count_pairs = sorted(counter.items(), key=lambda x: -x[1]) # [(word, count)] descending order of count
         self.chars, _ = zip(*count_pairs)
         self.vocab_size = len(self.chars)
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
         with open(vocab_file, 'wb') as f:
             cPickle.dump(self.chars, f)
         self.tensor = np.array(list(map(self.vocab.get, data)))
+        print(self.tensor)
         np.save(tensor_file, self.tensor)
 
     def load_preprocessed(self, vocab_file, tensor_file):
@@ -59,9 +65,13 @@ class TextLoader():
         ydata = np.copy(self.tensor)
         ydata[:-1] = xdata[1:]
         ydata[-1] = xdata[0]
+        #print("Creating batches: ")
+        print("X DATA:  "+str(xdata))
+        print("Y DATA:  "+str(ydata))
         self.x_batches = np.split(xdata.reshape(self.batch_size, -1), self.num_batches, 1)
         self.y_batches = np.split(ydata.reshape(self.batch_size, -1), self.num_batches, 1)
-
+        #print("X BATCH: "+str(self.x_batches))
+        #print("Y BATCH: "+str(self.y_batches))
 
     def next_batch(self):
         x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
