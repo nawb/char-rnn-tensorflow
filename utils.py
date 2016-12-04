@@ -32,7 +32,8 @@ class TextLoader():
     def preprocess(self, input_file, vocab_file, tensor_file):
         with codecs.open(input_file, "r", encoding=self.encoding) as f:
             data = f.read()
-        counter = collections.Counter(self.tokenize_data(data)) # {count: word}
+        data = self.tokenize_data(data)
+        counter = collections.Counter(data) # {count: word}
         count_pairs = sorted(counter.items(), key=lambda x: -x[1]) # [(word, count)] descending order of count
         self.chars, _ = zip(*count_pairs)
         self.vocab_size = len(self.chars)
@@ -66,8 +67,8 @@ class TextLoader():
         ydata[:-1] = xdata[1:]
         ydata[-1] = xdata[0]
         #print("Creating batches: ")
-        print("X DATA:  "+str(xdata))
-        print("Y DATA:  "+str(ydata))
+        #print("X DATA:  "+str(xdata))
+        #print("Y DATA:  "+str(ydata))
         self.x_batches = np.split(xdata.reshape(self.batch_size, -1), self.num_batches, 1)
         self.y_batches = np.split(ydata.reshape(self.batch_size, -1), self.num_batches, 1)
         #print("X BATCH: "+str(self.x_batches))
